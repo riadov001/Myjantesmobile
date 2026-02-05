@@ -7,6 +7,7 @@ import {
   ScrollView,
   Text,
   Modal,
+  Image,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { ThemedView } from "@/components/ThemedView";
@@ -58,12 +59,18 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
       ) : null}
 
       <View style={styles.content}>
+        <Image
+          source={require("../../assets/images/icon.png")}
+          style={styles.logo}
+          resizeMode="contain"
+        />
+        
         <ThemedText type="h1" style={styles.title}>
-          Something went wrong
+          Oups !
         </ThemedText>
 
         <ThemedText type="body" style={styles.message}>
-          Please reload the app to continue.
+          MyJantes a rencontré un problème inattendu. Veuillez redémarrer l'application.
         </ThemedText>
 
         <Pressable
@@ -71,7 +78,7 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
           style={({ pressed }) => [
             styles.button,
             {
-              backgroundColor: theme.link,
+              backgroundColor: theme.primary,
               opacity: pressed ? 0.9 : 1,
               transform: [{ scale: pressed ? 0.98 : 1 }],
             },
@@ -81,7 +88,7 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
             type="body"
             style={[styles.buttonText, { color: theme.buttonText }]}
           >
-            Try Again
+            Redémarrer l'application
           </ThemedText>
         </Pressable>
       </View>
@@ -97,7 +104,7 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
             <ThemedView style={styles.modalContainer}>
               <View style={styles.modalHeader}>
                 <ThemedText type="h2" style={styles.modalTitle}>
-                  Error Details
+                  Détails de l'erreur
                 </ThemedText>
                 <Pressable
                   onPress={() => setIsModalVisible(false)}
@@ -158,6 +165,12 @@ const styles = StyleSheet.create({
     gap: Spacing.lg,
     width: "100%",
     maxWidth: 600,
+  },
+  logo: {
+    width: 80,
+    height: 80,
+    marginBottom: Spacing.md,
+    opacity: 0.6,
   },
   title: {
     textAlign: "center",

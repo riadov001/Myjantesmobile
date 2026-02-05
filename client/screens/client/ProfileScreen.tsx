@@ -1,0 +1,264 @@
+import React from 'react';
+import { View, StyleSheet, Pressable, Switch, Alert } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useHeaderHeight } from '@react-navigation/elements';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
+import { useNavigation } from '@react-navigation/native';
+import { Feather } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
+
+import { ThemedText } from '@/components/ThemedText';
+import { ThemedView } from '@/components/ThemedView';
+import { Card } from '@/components/Card';
+import { Button } from '@/components/Button';
+import { KeyboardAwareScrollViewCompat } from '@/components/KeyboardAwareScrollViewCompat';
+import { useTheme } from '@/hooks/useTheme';
+import { useAuth } from '@/contexts/AuthContext';
+import { useNotifications, useMarkAllNotificationsRead } from '@/hooks/useApi';
+import { Spacing, BorderRadius } from '@/constants/theme';
+
+export default function ProfileScreen() {
+  const insets = useSafeAreaInsets();
+  const headerHeight = useHeaderHeight();
+  const tabBarHeight = useBottomTabBarHeight();
+  const navigation = useNavigation();
+  const { theme } = useTheme();
+  const { user, logout } = useAuth();
+  const { data: notifications, refetch: refetchNotifications } = useNotifications();
+  const markAllRead = useMarkAllNotificationsRead();
+
+  const unreadCount = notifications?.filter(n => !n.isRead).length || 0;
+
+  const handleMarkAllRead = async () => {
+    if (unreadCount === 0) return;
+    try {
+      await markAllRead.mutateAsync();
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      await refetchNotifications();
+    } catch (error) {
+      Alert.alert('Erreur', 'Impossible de marquer les notifications comme lues');
+    }
+  };
+
+  const handleLogout = () => {
+    Alert.alert(
+      'Déconnexion',
+      'Êtes-vous sûr de vouloir vous déconnecter ?',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Se déconnecter',
+          style: 'destructive',
+          onPress: async () => {
+            await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+            await logout();
+          },
+        },
+      ]
+    );
+  };
+
+  const getRoleName = (role?: string) => {
+    switch (role) {
+      case 'admin':
+        return 'Administrateur';
+      case 'superadmin':
+        return 'Super Administrateur';
+      default:
+        return 'Client';
+    }
+  };
+
+  return (
+    <ThemedView style={styles.container}>
+      <KeyboardAwareScrollViewCompat
+        contentContainerStyle={{
+          paddingTop: headerHeight + Spacing.xl,
+          paddingBottom: tabBarHeight + Spacing.xl,
+          paddingHorizontal: Spacing.lg,
+        }}
+      >
+        <Card style={[styles.profileCard, { backgroundColor: theme.backgroundDefault }]}>
+          <View style={[styles.avatar, { backgroundColor: `${theme.primary}15` }]}>
+            <ThemedText type="h1" style={{ color: theme.primary }}>
+              {user?.username?.charAt(0).toUpperCase() || 'U'}
+            </ThemedText>
+          </View>
+          <ThemedText type="h3" style={styles.username}>
+            {user?.username || 'Utilisateur'}
+          </ThemedText>
+          <ThemedText type="body" style={{ color: theme.textSecondary }}>
+            {user?.email || ''}
+          </ThemedText>
+          <View style={[styles.roleBadge, { backgroundColor: `${theme.primary}20` }]}>
+            <ThemedText type="small" style={{ color: theme.primary, fontWeight: '600' }}>
+              {getRoleName(user?.role)}
+            </ThemedText>
+          </View>
+        </Card>
+
+        <View style={styles.section}>
+          <ThemedText type="h4" style={styles.sectionTitle}>
+            Notifications
+          </ThemedText>
+          <Card style={[styles.menuCard, { backgroundColor: theme.backgroundDefault }]}>
+            <Pressable style={styles.menuItem} onPress={handleMarkAllRead}>
+              <View style={styles.menuItemLeft}>
+                <View style={[styles.menuIcon, { backgroundColor: `${theme.primary}15` }]}>
+                  <Feather name="bell" size={20} color={theme.primary} />
+                </View>
+                <View>
+                  <ThemedText type="body">Notifications non lues</ThemedText>
+                  <ThemedText type="small" style={{ color: theme.textSecondary }}>
+                    {unreadCount} notification{unreadCount !== 1 ? 's' : ''}
+                  </ThemedText>
+                </View>
+              </View>
+              {unreadCount > 0 ? (
+                <View style={[styles.badge, { backgroundColor: theme.error }]}>
+                  <ThemedText style={styles.badgeText}>{unreadCount}</ThemedText>
+                </View>
+              ) : (
+                <Feather name="check" size={20} color={theme.success} />
+              )}
+            </Pressable>
+          </Card>
+        </View>
+
+        <View style={styles.section}>
+          <ThemedText type="h4" style={styles.sectionTitle}>
+            Paramètres
+          </ThemedText>
+          <Card style={[styles.menuCard, { backgroundColor: theme.backgroundDefault }]}>
+            <View style={styles.menuItem}>
+              <View style={styles.menuItemLeft}>
+                <View style={[styles.menuIcon, { backgroundColor: `${theme.textSecondary}15` }]}>
+                  <Feather name="moon" size={20} color={theme.textSecondary} />
+                </View>
+                <ThemedText type="body">Thème sombre</ThemedText>
+              </View>
+              <ThemedText type="small" style={{ color: theme.textSecondary }}>
+                Automatique
+              </ThemedText>
+            </View>
+            <View style={[styles.divider, { backgroundColor: theme.border }]} />
+            <View style={styles.menuItem}>
+              <View style={styles.menuItemLeft}>
+                <View style={[styles.menuIcon, { backgroundColor: `${theme.textSecondary}15` }]}>
+                  <Feather name="globe" size={20} color={theme.textSecondary} />
+                </View>
+                <ThemedText type="body">Langue</ThemedText>
+              </View>
+              <ThemedText type="small" style={{ color: theme.textSecondary }}>
+                Français
+              </ThemedText>
+            </View>
+          </Card>
+        </View>
+
+        <View style={styles.section}>
+          <ThemedText type="h4" style={styles.sectionTitle}>
+            À propos
+          </ThemedText>
+          <Card style={[styles.menuCard, { backgroundColor: theme.backgroundDefault }]}>
+            <View style={styles.menuItem}>
+              <View style={styles.menuItemLeft}>
+                <View style={[styles.menuIcon, { backgroundColor: `${theme.textSecondary}15` }]}>
+                  <Feather name="info" size={20} color={theme.textSecondary} />
+                </View>
+                <ThemedText type="body">Version</ThemedText>
+              </View>
+              <ThemedText type="small" style={{ color: theme.textSecondary }}>
+                1.0.0
+              </ThemedText>
+            </View>
+          </Card>
+        </View>
+
+        <Button
+          onPress={handleLogout}
+          style={[styles.logoutButton, { backgroundColor: theme.error }]}
+        >
+          Se déconnecter
+        </Button>
+      </KeyboardAwareScrollViewCompat>
+    </ThemedView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  profileCard: {
+    alignItems: 'center',
+    padding: Spacing.xl,
+    marginBottom: Spacing.xl,
+  },
+  avatar: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: Spacing.md,
+  },
+  username: {
+    marginBottom: Spacing.xs,
+  },
+  roleBadge: {
+    marginTop: Spacing.md,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs,
+    borderRadius: BorderRadius.full,
+  },
+  section: {
+    marginBottom: Spacing.xl,
+  },
+  sectionTitle: {
+    marginBottom: Spacing.md,
+    marginLeft: Spacing.xs,
+  },
+  menuCard: {
+    padding: 0,
+    overflow: 'hidden',
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: Spacing.lg,
+  },
+  menuItemLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+  },
+  menuIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: BorderRadius.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  divider: {
+    height: StyleSheet.hairlineWidth,
+    marginLeft: 72,
+  },
+  badge: {
+    minWidth: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: Spacing.sm,
+  },
+  badgeText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  logoutButton: {
+    marginTop: Spacing.lg,
+  },
+});
