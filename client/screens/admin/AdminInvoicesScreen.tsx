@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { View, ScrollView, StyleSheet, RefreshControl, Pressable, Alert, Modal, TextInput, Image, ActivityIndicator, Platform } from 'react-native';
+import { View, ScrollView, StyleSheet, RefreshControl, Pressable, Alert, Modal, TextInput, Image, ActivityIndicator, Platform, Linking } from 'react-native';
 import { useHeaderHeight } from '@react-navigation/elements';
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
+import * as WebBrowser from 'expo-web-browser';
 import * as ImagePicker from 'expo-image-picker';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -14,6 +15,7 @@ import { EmptyState } from '@/components/EmptyState';
 import { Button } from '@/components/Button';
 import { useTheme } from '@/hooks/useTheme';
 import { useAdminInvoices, useAdminUsers, useMarkInvoicePaid, useSendInvoiceEmail, useRequestUploadUrl, useLinkInvoiceMedia } from '@/hooks/useApi';
+import { getApiUrl } from '@/lib/query-client';
 import { Spacing, BorderRadius } from '@/constants/theme';
 import { Invoice } from '@/types';
 
@@ -34,7 +36,7 @@ const PAYMENT_METHODS = [
 export default function AdminInvoicesScreen() {
   const { theme } = useTheme();
   const headerHeight = useHeaderHeight();
-  const tabBarHeight = useBottomTabBarHeight();
+  const insets = useSafeAreaInsets();
 
   const { data: invoices, isLoading, refetch } = useAdminInvoices();
   const { data: users } = useAdminUsers();
@@ -100,6 +102,22 @@ export default function AdminInvoicesScreen() {
     setSelectedInvoice(invoice);
     setSelectedImages([]);
     setPhotoModalVisible(true);
+  };
+
+  const handleDownloadPdf = async (invoice: Invoice) => {
+    try {
+      const baseUrl = getApiUrl();
+      const pdfUrl = `${baseUrl}api/invoices/${invoice.id}/pdf`;
+      
+      if (Platform.OS === 'web') {
+        window.open(pdfUrl, '_blank');
+      } else {
+        await WebBrowser.openBrowserAsync(pdfUrl);
+      }
+    } catch (error) {
+      console.error('PDF download error:', error);
+      Alert.alert('Erreur', 'Impossible de télécharger le PDF');
+    }
   };
 
   const pickImage = async () => {
@@ -206,7 +224,7 @@ export default function AdminInvoicesScreen() {
         <ScrollView
           contentContainerStyle={[
             styles.scrollContent,
-            { paddingTop: headerHeight + Spacing.lg, paddingBottom: tabBarHeight + Spacing.xl }
+            { paddingTop: headerHeight + Spacing.lg, paddingBottom: insets.bottom + Spacing.xl + 60 }
           ]}
         >
           <InvoiceCardSkeleton />
@@ -224,7 +242,7 @@ export default function AdminInvoicesScreen() {
       <ScrollView
         contentContainerStyle={[
           styles.scrollContent,
-          { paddingTop: headerHeight + Spacing.lg, paddingBottom: tabBarHeight + Spacing.xl }
+          { paddingTop: headerHeight + Spacing.lg, paddingBottom: insets.bottom + Spacing.xl + 60 }
         ]}
         refreshControl={
           <RefreshControl refreshing={false} onRefresh={refetch} tintColor={theme.primary} />
@@ -296,6 +314,12 @@ export default function AdminInvoicesScreen() {
                   {formatCurrency((invoice as any).totalAmount || invoice.totalTTC || invoice.amount)}
                 </ThemedText>
                 <View style={styles.actionButtons}>
+                  <Pressable
+                    style={[styles.actionBtn, { backgroundColor: '#6366f1' + '20' }]}
+                    onPress={() => handleDownloadPdf(invoice)}
+                  >
+                    <Feather name="download" size={16} color="#6366f1" />
+                  </Pressable>
                   {invoice.status !== 'paid' && (
                     <Pressable
                       style={[styles.actionBtn, { backgroundColor: theme.success + '20' }]}
