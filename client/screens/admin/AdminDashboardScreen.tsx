@@ -190,10 +190,10 @@ export default function AdminDashboardScreen() {
               const currentMonth = new Date().getMonth();
               const last6Months = Array.from({ length: 6 }, (_, i) => {
                 const monthIndex = (currentMonth - 5 + i + 12) % 12;
-                const data = monthlyData.find((d: any) => d.month === monthIndex + 1 || d.name === months[monthIndex]);
+                  const data = monthlyData.find((d: any) => d.month === monthIndex + 1 || d.name === months[monthIndex]);
                 return {
                   label: months[monthIndex],
-                  value: data?.total || data?.amount || Math.floor(Math.random() * 5000) + 1000,
+                  value: data?.total || (data as any)?.amount || Math.floor(Math.random() * 5000) + 1000,
                 };
               });
               const chartMax = Math.max(...last6Months.map(d => d.value), 1);

@@ -56,7 +56,7 @@ export default function AdminServicesScreen() {
     setFormData({
       name: service.name,
       description: service.description || '',
-      basePrice: String(Number(service.basePrice) || Number(service.price) || ''),
+      basePrice: String(Number(service.basePrice) || Number((service as any).price) || ''),
       category: service.category || '',
       isActive: service.isActive,
     });
@@ -176,7 +176,7 @@ export default function AdminServicesScreen() {
                     ) : null}
                     <View style={styles.serviceFooter}>
                       <ThemedText style={styles.servicePrice}>
-                        {formatCurrency(service.basePrice || service.price)}
+                        {formatCurrency(service.basePrice || (service as any).price)}
                       </ThemedText>
                       <Pressable
                         style={[styles.editBtn, { backgroundColor: theme.primary + '20' }]}
@@ -211,7 +211,7 @@ export default function AdminServicesScreen() {
                     </View>
                     <View style={styles.serviceFooter}>
                       <ThemedText style={styles.servicePrice}>
-                        {formatCurrency(service.basePrice || service.price)}
+                        {formatCurrency(service.basePrice || (service as any).price)}
                       </ThemedText>
                       <Pressable
                         style={[styles.editBtn, { backgroundColor: theme.primary + '20' }]}

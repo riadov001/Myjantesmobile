@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, ScrollView, StyleSheet, TextInput, Pressable, FlatList, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, ScrollView, StyleSheet, TextInput, Pressable, FlatList, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 
@@ -73,8 +73,12 @@ export default function AdminChatScreen() {
   };
 
   useEffect(() => {
+    if (user?.role !== 'admin' && (user as any)?.role !== 'employee' && user?.role !== 'superadmin') {
+      Alert.alert('Accès refusé', 'Le chat est réservé aux administrateurs et employés.');
+      return;
+    }
     fetchConversations();
-  }, []);
+  }, [user?.role]);
 
   useEffect(() => {
     if (selectedConversation) {

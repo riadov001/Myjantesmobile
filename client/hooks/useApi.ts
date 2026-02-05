@@ -95,7 +95,7 @@ export function useMarkAllNotificationsRead() {
 
 export function useServices() {
   return useQuery<Service[]>({
-    queryKey: ['/api/services'],
+    queryKey: ['/api/prestations'],
   });
 }
 
@@ -331,11 +331,11 @@ export function useCreateService() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: Partial<Service>) => {
-      const response = await apiRequest('POST', '/api/admin/services', data);
+      const response = await apiRequest('POST', '/api/admin/prestations', data);
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/services'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/prestations'] });
     },
   });
 }
@@ -344,11 +344,11 @@ export function useUpdateService() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<Service> }) => {
-      const response = await apiRequest('PATCH', `/api/admin/services/${id}`, data);
+      const response = await apiRequest('PATCH', `/api/admin/prestations/${id}`, data);
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/services'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/prestations'] });
     },
   });
 }
