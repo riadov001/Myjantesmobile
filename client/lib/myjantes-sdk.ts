@@ -211,18 +211,18 @@ export class MyJantesClient {
 
   // Services
   async getServices() {
-    return this.request('/services');
+    return this.request('/prestations');
   }
 
   async createService(data: any) {
-    return this.request('/admin/services', {
+    return this.request('/admin/prestations', {
       method: 'POST',
       body: JSON.stringify(data),
     });
   }
 
   async updateService(id: string, data: any) {
-    return this.request(`/admin/services/${id}`, {
+    return this.request(`/admin/prestations/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(data),
     });
