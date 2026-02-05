@@ -100,15 +100,32 @@ npm run server:dev  # Backend Express (port 5000)
 ## Changements Récents
 
 ### Février 2026
+- **Dashboard Admin Amélioré**:
+  - Graphique en barres montrant l'évolution du CA sur 6 mois
+  - Section activité récente avec derniers devis et réservations
+  - Statistiques visuelles des statuts de factures
+- **Upload de Photos**:
+  - Sélection depuis la galerie (multi-select supporté)
+  - Capture avec appareil photo (sur mobile)
+  - Prévisualisation en grille avec suppression individuelle
+  - Upload groupé vers le backend
+  - Disponible pour devis ET factures
+- **Page Paramètres Garage**:
+  - Informations de contact (téléphone, email, site web)
+  - Adresse complète du garage
+  - Informations légales (SIRET, TVA)
+  - Horaires d'ouverture par jour avec toggle ouvert/fermé
+  - Préférences de notifications (push, email, SMS)
 - **Espace Administrateur Complet**:
   - Dashboard avec analytics (CA, taux conversion, devis/factures/réservations en attente)
-  - Gestion des devis (création, modification, suppression, envoi)
-  - Gestion des factures (création, paiement, envoi email)
+  - Gestion des devis (création, modification, suppression, envoi, upload photos)
+  - Gestion des factures (création, paiement, envoi email, upload photos)
   - Gestion des réservations (validation, annulation)
   - Gestion des utilisateurs (liste, modification des rôles)
   - Gestion des services (création, modification, activation/désactivation)
   - Chat interne avec clients
   - Notifications admin
+  - Paramètres garage
 - Navigation automatique admin/client basée sur le rôle utilisateur
 - Connexion au backend PWA (appmytools.replit.app) via proxy local
 - Authentification par email/mot de passe avec session cookies
