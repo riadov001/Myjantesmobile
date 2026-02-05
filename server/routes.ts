@@ -10,7 +10,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     target: BACKEND_URL,
     changeOrigin: true,
     secure: true,
-    cookieDomainRewrite: "",
+    cookieDomainRewrite: {
+      "myjantes.mytoolsgroup.eu": "",
+      "*": ""
+    },
+    cookiePathRewrite: "/",
     pathRewrite: (path, req) => {
       // Ensure path starts with /api
       return path.startsWith('/api') ? path : `/api${path}`;
@@ -27,6 +31,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       proxyRes: (proxyRes, req, res) => {
         // Allow credentials
         proxyRes.headers["access-control-allow-credentials"] = "true";
+        
+        // Rewrite Set-Cookie headers to remove domain restriction
+        const cookies = proxyRes.headers['set-cookie'];
+        if (cookies) {
+          proxyRes.headers['set-cookie'] = cookies.map((cookie: string) => {
+            return cookie
+              .replace(/domain=[^;]+;?\s*/gi, '')
+              .replace(/secure;?\s*/gi, '')
+              .replace(/samesite=\w+;?\s*/gi, 'SameSite=Lax; ');
+          });
+        }
       },
       error: (err, req, res) => {
         console.error("Proxy error:", err);

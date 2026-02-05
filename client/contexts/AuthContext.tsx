@@ -80,14 +80,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async () => {
     try {
-      const baseUrl = getApiUrl();
-      const loginUrl = `${baseUrl}api/login`;
+      // Always use direct backend URL for login to trigger proper OAuth redirect
+      const backendUrl = 'https://myjantes.mytoolsgroup.eu';
       
       if (Platform.OS === 'web') {
-        window.location.href = loginUrl;
+        // Redirect to backend login - after auth, user returns to backend then navigates back
+        window.location.href = `${backendUrl}/api/login`;
       } else {
+        // For native, use WebBrowser auth session
         const result = await WebBrowser.openAuthSessionAsync(
-          loginUrl,
+          `${backendUrl}/api/login`,
           'myjantes://'
         );
         
