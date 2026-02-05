@@ -72,31 +72,38 @@ export default function AdminPlanningScreen() {
 
   const getReservationsForDate = (day: number) => {
     if (!reservations) return [];
+    // Normalize target date to midnight local time
     const targetDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+    const targetYMD = `${targetDate.getFullYear()}-${targetDate.getMonth()}-${targetDate.getDate()}`;
+    
     return reservations.filter(r => {
+      if (!r.date) return false;
       const resDate = new Date(r.date);
-      return resDate.getFullYear() === targetDate.getFullYear() &&
-             resDate.getMonth() === targetDate.getMonth() &&
-             resDate.getDate() === targetDate.getDate();
+      const resYMD = `${resDate.getFullYear()}-${resDate.getMonth()}-${resDate.getDate()}`;
+      return resYMD === targetYMD;
     });
   };
 
   const selectedDateReservations = useMemo(() => {
     if (!selectedDate || !reservations) return [];
+    const targetYMD = `${selectedDate.getFullYear()}-${selectedDate.getMonth()}-${selectedDate.getDate()}`;
+    
     return reservations.filter(r => {
+      if (!r.date) return false;
       const resDate = new Date(r.date);
-      return resDate.getFullYear() === selectedDate.getFullYear() &&
-             resDate.getMonth() === selectedDate.getMonth() &&
-             resDate.getDate() === selectedDate.getDate();
+      const resYMD = `${resDate.getFullYear()}-${resDate.getMonth()}-${resDate.getDate()}`;
+      return resYMD === targetYMD;
     });
   }, [selectedDate, reservations]);
 
   const prevMonth = () => {
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
+    refetch();
   };
 
   const nextMonth = () => {
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
+    refetch();
   };
 
   const handleDayPress = (day: number) => {
