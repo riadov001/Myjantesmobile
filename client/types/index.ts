@@ -2,26 +2,42 @@ export interface User {
   id: string;
   username: string;
   email: string;
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  address?: string;
+  postalCode?: string;
+  city?: string;
+  profileImageUrl?: string;
   role: 'client' | 'admin' | 'superadmin';
   garageId?: string;
+  companyName?: string;
+  siret?: string;
+  tvaNumber?: string;
+  companyAddress?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Quote {
   id: string;
-  reference: string;
-  clientId: string;
+  reference?: string;
+  quoteNumber?: string;
+  clientId?: string;
+  userId?: string;
   serviceId?: string;
-  vehicleBrand: string;
-  vehicleModel: string;
-  vehiclePlate: string;
+  vehicleBrand?: string;
+  vehicleModel?: string;
+  vehiclePlate?: string;
   vehicleVin?: string;
-  items: QuoteItem[];
+  items?: QuoteItem[];
   notes?: string;
-  status: 'pending' | 'approved' | 'rejected' | 'completed';
-  totalHT: number;
-  totalTTC: number;
+  status: 'pending' | 'approved' | 'rejected' | 'completed' | 'draft' | 'sent';
+  totalHT?: number;
+  totalTTC?: number;
+  validUntil?: string;
   createdAt: string;
-  updatedAt: string;
+  updatedAt?: string;
 }
 
 export interface QuoteItem {
@@ -33,38 +49,51 @@ export interface QuoteItem {
 
 export interface Invoice {
   id: string;
-  number: string;
+  number?: string;
+  invoiceNumber?: string;
   quoteId?: string;
-  clientId: string;
+  clientId?: string;
+  userId?: string;
   amount: number;
-  dueDate: string;
-  status: 'pending' | 'paid' | 'overdue' | 'cancelled';
+  totalHT?: number;
+  totalTTC?: number;
+  dueDate?: string;
+  status: 'pending' | 'paid' | 'overdue' | 'cancelled' | 'draft' | 'sent';
   paymentMethod?: 'card' | 'wire_transfer' | 'cash' | 'check';
   paidAt?: string;
   createdAt: string;
-  updatedAt: string;
+  updatedAt?: string;
 }
 
 export interface Reservation {
   id: string;
-  clientId: string;
-  serviceId: string;
+  clientId?: string;
+  userId?: string;
+  serviceId?: string;
   serviceName?: string;
   date: string;
-  time: string;
+  time?: string;
   notes?: string;
   status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
   createdAt: string;
-  updatedAt: string;
+  updatedAt?: string;
 }
 
 export interface Service {
   id: string;
   name: string;
   description?: string;
+  basePrice?: number;
   price?: number;
   duration?: number;
+  estimatedDuration?: number;
+  category?: string;
+  imageUrl?: string;
   isActive: boolean;
+  garageId?: string;
+  customFormFields?: any;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Notification {
@@ -73,7 +102,9 @@ export interface Notification {
   type: string;
   title: string;
   message: string;
-  isRead: boolean;
+  isRead?: boolean;
+  read?: boolean;
+  relatedId?: string;
   createdAt: string;
 }
 
