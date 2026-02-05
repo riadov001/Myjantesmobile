@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { View, ScrollView, StyleSheet, RefreshControl, Pressable, Alert, Modal, TextInput } from 'react-native';
+import { View, ScrollView, StyleSheet, RefreshControl, Pressable, Alert, Modal, TextInput, Image, ActivityIndicator, Platform } from 'react-native';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { Feather } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -12,9 +13,16 @@ import { LoadingSkeleton, InvoiceCardSkeleton } from '@/components/LoadingSkelet
 import { EmptyState } from '@/components/EmptyState';
 import { Button } from '@/components/Button';
 import { useTheme } from '@/hooks/useTheme';
-import { useAdminInvoices, useAdminUsers, useMarkInvoicePaid, useSendInvoiceEmail } from '@/hooks/useApi';
+import { useAdminInvoices, useAdminUsers, useMarkInvoicePaid, useSendInvoiceEmail, useRequestUploadUrl, useLinkInvoiceMedia } from '@/hooks/useApi';
 import { Spacing, BorderRadius } from '@/constants/theme';
 import { Invoice } from '@/types';
+
+interface SelectedImage {
+  uri: string;
+  name: string;
+  type: string;
+  size?: number;
+}
 
 const PAYMENT_METHODS = [
   { value: 'card', label: 'Carte bancaire' },
@@ -32,10 +40,15 @@ export default function AdminInvoicesScreen() {
   const { data: users } = useAdminUsers();
   const markPaid = useMarkInvoicePaid();
   const sendEmail = useSendInvoiceEmail();
+  const requestUploadUrl = useRequestUploadUrl();
+  const linkInvoiceMedia = useLinkInvoiceMedia();
 
   const [paymentModal, setPaymentModal] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('card');
+  const [photoModalVisible, setPhotoModalVisible] = useState(false);
+  const [selectedImages, setSelectedImages] = useState<SelectedImage[]>([]);
+  const [uploading, setUploading] = useState(false);
 
   const getUserName = (clientId?: string) => {
     if (!clientId || !users) return 'Client inconnu';
@@ -80,6 +93,110 @@ export default function AdminInvoicesScreen() {
       Alert.alert('Succès', 'Email envoyé au client');
     } catch (error) {
       Alert.alert('Erreur', 'Impossible d\'envoyer l\'email');
+    }
+  };
+
+  const handleOpenPhotoModal = (invoice: Invoice) => {
+    setSelectedInvoice(invoice);
+    setSelectedImages([]);
+    setPhotoModalVisible(true);
+  };
+
+  const pickImage = async () => {
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    
+    if (!permissionResult.granted) {
+      Alert.alert('Permission requise', 'Veuillez autoriser l\'accès à la galerie photos');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsMultipleSelection: true,
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets) {
+      const newImages: SelectedImage[] = result.assets.map((asset: ImagePicker.ImagePickerAsset, index: number) => ({
+        uri: asset.uri,
+        name: asset.fileName || `photo_${Date.now()}_${index}.jpg`,
+        type: asset.mimeType || 'image/jpeg',
+        size: asset.fileSize,
+      }));
+      setSelectedImages([...selectedImages, ...newImages]);
+    }
+  };
+
+  const takePhoto = async () => {
+    const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+    
+    if (!permissionResult.granted) {
+      Alert.alert('Permission requise', 'Veuillez autoriser l\'accès à la caméra');
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      const asset = result.assets[0];
+      const newImage: SelectedImage = {
+        uri: asset.uri,
+        name: asset.fileName || `photo_${Date.now()}.jpg`,
+        type: asset.mimeType || 'image/jpeg',
+        size: asset.fileSize,
+      };
+      setSelectedImages([...selectedImages, newImage]);
+    }
+  };
+
+  const removeImage = (index: number) => {
+    setSelectedImages(selectedImages.filter((_, i) => i !== index));
+  };
+
+  const uploadImages = async () => {
+    if (!selectedInvoice || selectedImages.length === 0) return;
+
+    setUploading(true);
+    try {
+      for (const image of selectedImages) {
+        const uploadUrlResponse = await requestUploadUrl.mutateAsync({
+          name: image.name,
+          size: image.size || 1000000,
+          contentType: image.type,
+        });
+
+        if (uploadUrlResponse?.url) {
+          const response = await fetch(image.uri);
+          const blob = await response.blob();
+          
+          await fetch(uploadUrlResponse.url, {
+            method: 'PUT',
+            body: blob,
+            headers: {
+              'Content-Type': image.type,
+            },
+          });
+
+          await linkInvoiceMedia.mutateAsync({
+            invoiceId: selectedInvoice.id,
+            fileName: image.name,
+            filePath: uploadUrlResponse.objectPath,
+            fileType: image.type,
+          });
+        }
+      }
+
+      Alert.alert('Succès', 'Photos ajoutées avec succès');
+      setPhotoModalVisible(false);
+      setSelectedImages([]);
+      refetch();
+    } catch (error) {
+      console.error('Upload error:', error);
+      Alert.alert('Erreur', 'Impossible d\'uploader les photos');
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -188,6 +305,12 @@ export default function AdminInvoicesScreen() {
                     </Pressable>
                   )}
                   <Pressable
+                    style={[styles.actionBtn, { backgroundColor: theme.warning + '20' }]}
+                    onPress={() => handleOpenPhotoModal(invoice)}
+                  >
+                    <Feather name="camera" size={16} color={theme.warning} />
+                  </Pressable>
+                  <Pressable
                     style={[styles.actionBtn, { backgroundColor: theme.info + '20' }]}
                     onPress={() => handleSendEmail(invoice)}
                   >
@@ -250,6 +373,88 @@ export default function AdminInvoicesScreen() {
                 disabled={markPaid.isPending}
               >
                 <ThemedText style={{ color: '#fff' }}>Confirmer</ThemedText>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal visible={photoModalVisible} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: theme.backgroundSecondary }]}>
+            <View style={styles.modalHeader}>
+              <ThemedText style={styles.modalTitle}>
+                Photos de la facture
+              </ThemedText>
+              <Pressable onPress={() => setPhotoModalVisible(false)}>
+                <Feather name="x" size={24} color={theme.text} />
+              </Pressable>
+            </View>
+
+            <ScrollView style={styles.modalBody}>
+              <View style={styles.photoButtons}>
+                <Pressable
+                  style={[styles.photoButton, { backgroundColor: theme.primary }]}
+                  onPress={pickImage}
+                >
+                  <Feather name="image" size={20} color="#fff" />
+                  <ThemedText style={styles.photoButtonText}>Galerie</ThemedText>
+                </Pressable>
+                {Platform.OS !== 'web' && (
+                  <Pressable
+                    style={[styles.photoButton, { backgroundColor: theme.info }]}
+                    onPress={takePhoto}
+                  >
+                    <Feather name="camera" size={20} color="#fff" />
+                    <ThemedText style={styles.photoButtonText}>Caméra</ThemedText>
+                  </Pressable>
+                )}
+              </View>
+
+              {selectedImages.length > 0 ? (
+                <View style={styles.selectedImagesContainer}>
+                  <ThemedText style={styles.inputLabel}>
+                    Photos sélectionnées ({selectedImages.length})
+                  </ThemedText>
+                  <View style={styles.imageGrid}>
+                    {selectedImages.map((image, index) => (
+                      <View key={index} style={styles.imageWrapper}>
+                        <Image source={{ uri: image.uri }} style={styles.selectedImage} />
+                        <Pressable
+                          style={[styles.removeImageBtn, { backgroundColor: theme.error }]}
+                          onPress={() => removeImage(index)}
+                        >
+                          <Feather name="x" size={14} color="#fff" />
+                        </Pressable>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              ) : null}
+            </ScrollView>
+
+            <View style={styles.modalFooter}>
+              <Pressable
+                style={[styles.secondaryButton, { borderColor: theme.border }]}
+                onPress={() => setPhotoModalVisible(false)}
+              >
+                <ThemedText>Annuler</ThemedText>
+              </Pressable>
+              <Pressable
+                style={[
+                  styles.primaryButton,
+                  { backgroundColor: selectedImages.length > 0 ? theme.primary : theme.border }
+                ]}
+                onPress={uploadImages}
+                disabled={uploading || selectedImages.length === 0}
+              >
+                {uploading ? (
+                  <ActivityIndicator color="#fff" size="small" />
+                ) : (
+                  <ThemedText style={{ color: '#fff' }}>
+                    Envoyer ({selectedImages.length})
+                  </ThemedText>
+                )}
               </Pressable>
             </View>
           </View>
@@ -399,6 +604,50 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: Spacing.md,
     borderRadius: BorderRadius.md,
+    alignItems: 'center',
+  },
+  photoButtons: {
+    flexDirection: 'row',
+    gap: Spacing.md,
+    marginBottom: Spacing.lg,
+  },
+  photoButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: Spacing.md,
+    borderRadius: BorderRadius.md,
+    gap: Spacing.sm,
+  },
+  photoButtonText: {
+    color: '#fff',
+    fontWeight: '600',
+  },
+  selectedImagesContainer: {
+    marginTop: Spacing.md,
+  },
+  imageGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.sm,
+  },
+  imageWrapper: {
+    position: 'relative',
+  },
+  selectedImage: {
+    width: 100,
+    height: 100,
+    borderRadius: BorderRadius.md,
+  },
+  removeImageBtn: {
+    position: 'absolute',
+    top: -8,
+    right: -8,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    justifyContent: 'center',
     alignItems: 'center',
   },
 });

@@ -409,3 +409,50 @@ export function useQuoteMedia(quoteId: string) {
     enabled: !!quoteId,
   });
 }
+
+export function useLinkInvoiceMedia() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ invoiceId, fileName, filePath, fileType }: { 
+      invoiceId: string; 
+      fileName: string; 
+      filePath: string; 
+      fileType: string; 
+    }) => {
+      const response = await apiRequest('POST', `/api/admin/invoices/${invoiceId}/media`, {
+        fileName,
+        filePath,
+        fileType,
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/invoices'] });
+    },
+  });
+}
+
+export function useDeleteInvoiceMedia() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ invoiceId, mediaId }: { invoiceId: string; mediaId: string }) => {
+      await apiRequest('DELETE', `/api/admin/invoices/${invoiceId}/media/${mediaId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/invoices'] });
+    },
+  });
+}
+
+export function useInvoiceMedia(invoiceId: string) {
+  return useQuery<any[]>({
+    queryKey: ['/api/invoices', invoiceId, 'media'],
+    queryFn: async () => {
+      const baseUrl = getApiUrl();
+      const response = await fetch(`${baseUrl}api/invoices/${invoiceId}/media`, { credentials: 'include' });
+      if (!response.ok) return [];
+      return response.json();
+    },
+    enabled: !!invoiceId,
+  });
+}
