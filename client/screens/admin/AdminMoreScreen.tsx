@@ -17,6 +17,7 @@ const MENU_ITEMS = [
   { id: 'services', icon: 'tool', label: 'Gestion des services', screen: 'AdminServices' },
   { id: 'chat', icon: 'message-circle', label: 'Chat interne', screen: 'AdminChat' },
   { id: 'notifications', icon: 'bell', label: 'Notifications', screen: 'AdminNotifications' },
+  { id: 'settings', icon: 'settings', label: 'Paramètres du garage', screen: 'AdminSettings' },
 ];
 
 export default function AdminMoreScreen() {

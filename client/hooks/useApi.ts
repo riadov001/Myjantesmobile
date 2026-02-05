@@ -456,3 +456,28 @@ export function useInvoiceMedia(invoiceId: string) {
     enabled: !!invoiceId,
   });
 }
+
+export function useGarageSettings() {
+  return useQuery<any>({
+    queryKey: ['/api/admin/settings'],
+    queryFn: async () => {
+      const baseUrl = getApiUrl();
+      const response = await fetch(`${baseUrl}api/admin/settings`, { credentials: 'include' });
+      if (!response.ok) return {};
+      return response.json();
+    },
+  });
+}
+
+export function useUpdateGarageSettings() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (settings: any) => {
+      const response = await apiRequest('PUT', '/api/admin/settings', settings);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/settings'] });
+    },
+  });
+}

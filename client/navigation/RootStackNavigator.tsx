@@ -11,6 +11,7 @@ import AdminUsersScreen from '@/screens/admin/AdminUsersScreen';
 import AdminServicesScreen from '@/screens/admin/AdminServicesScreen';
 import AdminChatScreen from '@/screens/admin/AdminChatScreen';
 import AdminNotificationsScreen from '@/screens/admin/AdminNotificationsScreen';
+import AdminSettingsScreen from '@/screens/admin/AdminSettingsScreen';
 import { useScreenOptions } from '@/hooks/useScreenOptions';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/hooks/useTheme';
@@ -25,6 +26,7 @@ export type RootStackParamList = {
   AdminServices: undefined;
   AdminChat: undefined;
   AdminNotifications: undefined;
+  AdminSettings: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -107,6 +109,14 @@ export default function RootStackNavigator() {
             component={AdminNotificationsScreen}
             options={{
               headerTitle: 'Notifications',
+              presentation: 'card',
+            }}
+          />
+          <Stack.Screen
+            name="AdminSettings"
+            component={AdminSettingsScreen}
+            options={{
+              headerTitle: 'Paramètres',
               presentation: 'card',
             }}
           />
