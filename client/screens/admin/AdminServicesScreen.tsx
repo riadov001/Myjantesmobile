@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, ScrollView, StyleSheet, RefreshControl, Pressable, Alert, Modal, TextInput, Switch } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useHeaderHeight } from '@react-navigation/elements';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { Feather } from '@expo/vector-icons';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -16,7 +17,8 @@ import { Service } from '@/types';
 
 export default function AdminServicesScreen() {
   const { theme } = useTheme();
-  const insets = useSafeAreaInsets();
+  const headerHeight = useHeaderHeight();
+  const tabBarHeight = useBottomTabBarHeight();
 
   const { data: services, isLoading, refetch } = useServices();
   const createService = useCreateService();
@@ -107,7 +109,7 @@ export default function AdminServicesScreen() {
         <ScrollView
           contentContainerStyle={[
             styles.scrollContent,
-            { paddingTop: insets.top + Spacing.lg, paddingBottom: insets.bottom + Spacing.xl }
+            { paddingTop: headerHeight + Spacing.lg, paddingBottom: tabBarHeight + Spacing.xl }
           ]}
         >
           <StatCardSkeleton />
@@ -128,7 +130,7 @@ export default function AdminServicesScreen() {
       <ScrollView
         contentContainerStyle={[
           styles.scrollContent,
-          { paddingTop: insets.top + Spacing.lg, paddingBottom: insets.bottom + Spacing.xl }
+          { paddingTop: headerHeight + Spacing.lg, paddingBottom: tabBarHeight + Spacing.xl }
         ]}
         refreshControl={
           <RefreshControl refreshing={false} onRefresh={refetch} tintColor={theme.primary} />

@@ -91,13 +91,13 @@ export default function AdminTabNavigator() {
         }}
       />
       <Tab.Screen
-        name="AdminReservationsTab"
-        component={AdminReservationsScreen}
+        name="AdminServicesTab"
+        component={AdminServicesScreen}
         options={{
-          title: 'RDV',
-          headerTitle: 'Réservations',
+          title: 'Prestations',
+          headerTitle: 'Gestion des Prestations',
           tabBarIcon: ({ color, size }) => (
-            <Feather name="calendar" size={size} color={color} />
+            <Feather name="tool" size={size} color={color} />
           ),
         }}
       />
