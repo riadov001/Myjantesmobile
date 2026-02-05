@@ -97,6 +97,17 @@ npm run server:dev  # Backend Express (port 5000)
 - **Start Frontend**: Lance le serveur Expo
 - **Start Backend**: Lance le serveur Express
 
+### Espace Administrateur
+1. **Dashboard**: Analytics avancées, graphiques CA, activité récente
+2. **Devis**: Création, modification, suppression, envoi email, upload photos
+3. **Factures**: Gestion des paiements, envoi email avec popup éditable, upload photos
+4. **Réservations**: Validation, annulation, assignation d'employés
+5. **Planning**: Vue calendrier mensuelle, détails par jour, assignation employés
+6. **Chat Interne**: Messagerie entre admin/superadmin/employés (base locale PostgreSQL)
+7. **Utilisateurs**: Gestion des rôles (client, admin, superadmin, employee)
+8. **Services/Prestations**: Création, modification, activation/désactivation
+9. **Paramètres Garage**: Infos contact, horaires, préférences notifications
+
 ## Changements Récents
 
 ### Février 2026
@@ -116,14 +127,30 @@ npm run server:dev  # Backend Express (port 5000)
   - Informations légales (SIRET, TVA)
   - Horaires d'ouverture par jour avec toggle ouvert/fermé
   - Préférences de notifications (push, email, SMS)
+- **Email Popup (Factures)**:
+  - Popup éditable avant envoi d'email
+  - Champs objet et message personnalisables
+  - Prévisualisation du contenu avant envoi
+  - PDF automatiquement joint à l'email
+- **Planning / Calendrier**:
+  - Vue calendrier mensuelle avec navigation
+  - Sélection de jour pour voir les réservations
+  - Détails des réservations par jour
+  - Assignation d'employés aux réservations
+- **Chat Interne (Local)**:
+  - Base de données PostgreSQL locale pour le chat
+  - Conversations entre admin/superadmin/employés uniquement
+  - Messages en temps réel avec historique
+  - Indicateurs de conversation non lue
 - **Espace Administrateur Complet**:
   - Dashboard avec analytics (CA, taux conversion, devis/factures/réservations en attente)
   - Gestion des devis (création, modification, suppression, envoi, upload photos)
-  - Gestion des factures (création, paiement, envoi email, upload photos)
-  - Gestion des réservations (validation, annulation)
+  - Gestion des factures (création, paiement, envoi email popup, upload photos)
+  - Gestion des réservations (validation, annulation, assignation employés)
+  - Planning calendrier avec réservations et assignations
   - Gestion des utilisateurs (liste, modification des rôles)
   - Gestion des services (création, modification, activation/désactivation)
-  - Chat interne avec clients
+  - Chat interne entre staff
   - Notifications admin
   - Paramètres garage
 - Navigation automatique admin/client basée sur le rôle utilisateur

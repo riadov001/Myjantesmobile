@@ -51,6 +51,10 @@ export default function AdminInvoicesScreen() {
   const [photoModalVisible, setPhotoModalVisible] = useState(false);
   const [selectedImages, setSelectedImages] = useState<SelectedImage[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [emailModal, setEmailModal] = useState(false);
+  const [emailSubject, setEmailSubject] = useState('');
+  const [emailBody, setEmailBody] = useState('');
+  const [sendingEmail, setSendingEmail] = useState(false);
 
   const getUserName = (clientId?: string) => {
     if (!clientId || !users) return 'Client inconnu';
@@ -89,12 +93,25 @@ export default function AdminInvoicesScreen() {
     }
   };
 
-  const handleSendEmail = async (invoice: Invoice) => {
+  const handleOpenEmailModal = (invoice: Invoice) => {
+    setSelectedInvoice(invoice);
+    const clientName = getUserName(invoice.clientId);
+    setEmailSubject(`Votre facture ${invoice.invoiceNumber || invoice.id} - MyJantes`);
+    setEmailBody(`Bonjour ${clientName},\n\nVeuillez trouver ci-joint votre facture ${invoice.invoiceNumber || invoice.id} d'un montant de ${formatCurrency(invoice.totalAmount)}.\n\nNous vous remercions pour votre confiance.\n\nCordialement,\nL'équipe MyJantes`);
+    setEmailModal(true);
+  };
+
+  const handleConfirmSendEmail = async () => {
+    if (!selectedInvoice) return;
+    setSendingEmail(true);
     try {
-      await sendEmail.mutateAsync(invoice.id);
+      await sendEmail.mutateAsync(selectedInvoice.id);
+      setEmailModal(false);
       Alert.alert('Succès', 'Email envoyé au client');
     } catch (error) {
       Alert.alert('Erreur', 'Impossible d\'envoyer l\'email');
+    } finally {
+      setSendingEmail(false);
     }
   };
 
@@ -336,7 +353,7 @@ export default function AdminInvoicesScreen() {
                   </Pressable>
                   <Pressable
                     style={[styles.actionBtn, { backgroundColor: theme.info + '20' }]}
-                    onPress={() => handleSendEmail(invoice)}
+                    onPress={() => handleOpenEmailModal(invoice)}
                   >
                     <Feather name="mail" size={16} color={theme.info} />
                   </Pressable>
@@ -478,6 +495,70 @@ export default function AdminInvoicesScreen() {
                   <ThemedText style={{ color: '#fff' }}>
                     Envoyer ({selectedImages.length})
                   </ThemedText>
+                )}
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal visible={emailModal} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: theme.backgroundSecondary }]}>
+            <View style={styles.modalHeader}>
+              <ThemedText style={styles.modalTitle}>Envoyer par email</ThemedText>
+              <Pressable onPress={() => setEmailModal(false)}>
+                <Feather name="x" size={24} color={theme.text} />
+              </Pressable>
+            </View>
+
+            <ScrollView style={styles.modalBody}>
+              <ThemedText style={styles.inputLabel}>Objet</ThemedText>
+              <TextInput
+                style={[styles.input, { color: theme.text, borderColor: theme.border }]}
+                value={emailSubject}
+                onChangeText={setEmailSubject}
+                placeholderTextColor={theme.textSecondary}
+              />
+
+              <ThemedText style={styles.inputLabel}>Message</ThemedText>
+              <TextInput
+                style={[styles.input, styles.textArea, { color: theme.text, borderColor: theme.border }]}
+                value={emailBody}
+                onChangeText={setEmailBody}
+                placeholderTextColor={theme.textSecondary}
+                multiline
+                numberOfLines={8}
+                textAlignVertical="top"
+              />
+
+              <View style={[styles.emailInfo, { backgroundColor: theme.info + '10' }]}>
+                <Feather name="info" size={16} color={theme.info} />
+                <ThemedText style={[styles.emailInfoText, { color: theme.info }]}>
+                  La facture PDF sera automatiquement jointe à l'email
+                </ThemedText>
+              </View>
+            </ScrollView>
+
+            <View style={styles.modalFooter}>
+              <Pressable
+                style={[styles.secondaryButton, { borderColor: theme.border }]}
+                onPress={() => setEmailModal(false)}
+              >
+                <ThemedText>Annuler</ThemedText>
+              </Pressable>
+              <Pressable
+                style={[styles.primaryButton, { backgroundColor: theme.primary }]}
+                onPress={handleConfirmSendEmail}
+                disabled={sendingEmail}
+              >
+                {sendingEmail ? (
+                  <ActivityIndicator color="#fff" size="small" />
+                ) : (
+                  <View style={styles.buttonContent}>
+                    <Feather name="send" size={16} color="#fff" />
+                    <ThemedText style={{ color: '#fff', marginLeft: 8 }}>Envoyer</ThemedText>
+                  </View>
                 )}
               </Pressable>
             </View>
@@ -672,6 +753,26 @@ const styles = StyleSheet.create({
     height: 24,
     borderRadius: 12,
     justifyContent: 'center',
+    alignItems: 'center',
+  },
+  textArea: {
+    minHeight: 150,
+    paddingTop: Spacing.md,
+  },
+  emailInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: Spacing.md,
+    borderRadius: BorderRadius.md,
+    marginTop: Spacing.md,
+    gap: Spacing.sm,
+  },
+  emailInfoText: {
+    flex: 1,
+    fontSize: 13,
+  },
+  buttonContent: {
+    flexDirection: 'row',
     alignItems: 'center',
   },
 });

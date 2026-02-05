@@ -13,6 +13,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Spacing, BorderRadius } from '@/constants/theme';
 
 const MENU_ITEMS = [
+  { id: 'planning', icon: 'calendar', label: 'Planning / Calendrier', screen: 'AdminPlanning' },
+  { id: 'reservations', icon: 'clock', label: 'Réservations', screen: 'AdminReservations' },
   { id: 'users', icon: 'users', label: 'Gestion des utilisateurs', screen: 'AdminUsers' },
   { id: 'services', icon: 'tool', label: 'Gestion des services', screen: 'AdminServices' },
   { id: 'chat', icon: 'message-circle', label: 'Chat interne', screen: 'AdminChat' },

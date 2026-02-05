@@ -9,7 +9,7 @@ export interface User {
   postalCode?: string;
   city?: string;
   profileImageUrl?: string;
-  role: 'client' | 'admin' | 'superadmin';
+  role: 'client' | 'admin' | 'superadmin' | 'employee';
   garageId?: string;
   companyName?: string;
   siret?: string;
@@ -75,6 +75,7 @@ export interface Reservation {
   time?: string;
   notes?: string;
   status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
+  assignedTo?: string;
   createdAt: string;
   updatedAt?: string;
 }

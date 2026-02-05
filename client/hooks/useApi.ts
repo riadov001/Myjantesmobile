@@ -276,6 +276,19 @@ export function useConfirmReservation() {
   });
 }
 
+export function useUpdateReservation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<Reservation> }) => {
+      const response = await apiRequest('PATCH', `/api/admin/reservations/${id}`, data);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/reservations'] });
+    },
+  });
+}
+
 export function useAdminUsers() {
   return useQuery<User[]>({
     queryKey: ['/api/admin/users'],

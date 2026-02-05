@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, ScrollView, StyleSheet, RefreshControl, Pressable, Alert } from 'react-native';
 import { useHeaderHeight } from '@react-navigation/elements';
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -18,7 +18,7 @@ import { Reservation } from '@/types';
 export default function AdminReservationsScreen() {
   const { theme } = useTheme();
   const headerHeight = useHeaderHeight();
-  const tabBarHeight = useBottomTabBarHeight();
+  const insets = useSafeAreaInsets();
 
   const { data: reservations, isLoading, refetch } = useAdminReservations();
   const { data: users } = useAdminUsers();
@@ -96,7 +96,7 @@ export default function AdminReservationsScreen() {
         <ScrollView
           contentContainerStyle={[
             styles.scrollContent,
-            { paddingTop: headerHeight + Spacing.lg, paddingBottom: tabBarHeight + Spacing.xl }
+            { paddingTop: headerHeight + Spacing.lg, paddingBottom: insets.bottom + Spacing.xl + 60 }
           ]}
         >
           <QuoteCardSkeleton />
@@ -185,7 +185,7 @@ export default function AdminReservationsScreen() {
       <ScrollView
         contentContainerStyle={[
           styles.scrollContent,
-          { paddingTop: headerHeight + Spacing.lg, paddingBottom: tabBarHeight + Spacing.xl }
+          { paddingTop: headerHeight + Spacing.lg, paddingBottom: insets.bottom + Spacing.xl + 60 }
         ]}
         refreshControl={
           <RefreshControl refreshing={false} onRefresh={refetch} tintColor={theme.primary} />
