@@ -1,36 +1,33 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 import { Platform } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+// Backend PWA URL
+const PWA_BACKEND_URL = 'https://appmytools.replit.app/';
+
+// Key for storing auth token
+export const AUTH_TOKEN_KEY = '@myjantes_auth_token';
+
+// Store auth token
+export async function setAuthToken(token: string | null) {
+  if (token) {
+    await AsyncStorage.setItem(AUTH_TOKEN_KEY, token);
+  } else {
+    await AsyncStorage.removeItem(AUTH_TOKEN_KEY);
+  }
+}
+
+// Get auth token
+export async function getAuthToken(): Promise<string | null> {
+  return AsyncStorage.getItem(AUTH_TOKEN_KEY);
+}
 
 /**
- * Gets the base URL for the Express API server (e.g., "http://localhost:3000")
+ * Gets the base URL for the PWA API server
  * @returns {string} The API base URL
  */
 export function getApiUrl(): string {
-  // For web, construct URL to backend port
-  if (Platform.OS === 'web') {
-    if (typeof window !== 'undefined') {
-      const currentHost = window.location.hostname;
-      const protocol = window.location.protocol;
-      
-      // In development (localhost), use the backend port directly
-      if (currentHost === 'localhost' || currentHost === '127.0.0.1') {
-        return 'http://localhost:5000/';
-      }
-      
-      // In Replit, access port 5000 via the same hostname
-      return `${protocol}//${currentHost}:5000/`;
-    }
-    return '/';
-  }
-
-  // For native, we use the configured domain pointing to backend
-  const host = process.env.EXPO_PUBLIC_DOMAIN;
-  if (!host) {
-    return 'http://localhost:5000/';
-  }
-
-  const url = host.startsWith('http') ? host : `https://${host}`;
-  return url.endsWith('/') ? url : `${url}/`;
+  return PWA_BACKEND_URL;
 }
 
 async function throwIfResNotOk(res: Response) {
@@ -46,13 +43,21 @@ export async function apiRequest(
   data?: unknown | undefined,
 ): Promise<Response> {
   const baseUrl = getApiUrl();
-  // Remove leading slash from route if baseUrl ends with one
   const cleanRoute = route.startsWith('/') ? route.slice(1) : route;
   const url = new URL(cleanRoute, baseUrl);
 
+  const token = await getAuthToken();
+  const headers: Record<string, string> = {};
+  if (data) {
+    headers["Content-Type"] = "application/json";
+  }
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
   const res = await fetch(url, {
     method,
-    headers: data ? { "Content-Type": "application/json" } : {},
+    headers,
     body: data ? JSON.stringify(data) : undefined,
     credentials: "include",
   });
@@ -72,7 +77,14 @@ export const getQueryFn: <T>(options: {
     const cleanRoute = route.startsWith('/') ? route.slice(1) : route;
     const url = new URL(cleanRoute, baseUrl);
 
+    const token = await getAuthToken();
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
     const res = await fetch(url, {
+      headers,
       credentials: "include",
     });
 

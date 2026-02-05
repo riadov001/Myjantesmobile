@@ -5,7 +5,7 @@ import * as WebBrowser from 'expo-web-browser';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 import { User } from '@/types';
-import { getApiUrl } from '@/lib/query-client';
+import { getApiUrl, setAuthToken, getAuthToken } from '@/lib/query-client';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -43,8 +43,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const fetchUser = useCallback(async (): Promise<User | null> => {
     try {
+      const token = await getAuthToken();
+      if (!token) return null;
+      
       const baseUrl = getApiUrl();
+      const headers: Record<string, string> = {
+        'Authorization': `Bearer ${token}`,
+      };
+      
       const response = await fetch(`${baseUrl}api/auth/user`, {
+        headers,
         credentials: 'include',
       });
       
@@ -53,7 +61,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (contentType && contentType.includes('application/json')) {
           const userData = await response.json();
           if (userData && userData.id) {
-            return userData;
+            return {
+              id: userData.id,
+              email: userData.email,
+              username: userData.firstName || userData.email.split('@')[0],
+              role: userData.role || 'client',
+              garageId: userData.garageId,
+            } as User;
           }
         }
       }
@@ -64,10 +78,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const handleAuthResponse = async (data: any): Promise<{ success: boolean; error?: string }> => {
-    if (data && data.id) {
-      setUser(data);
-      await AsyncStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(data));
+  const handleAuthResponse = async (data: any, token?: string): Promise<{ success: boolean; error?: string }> => {
+    if (data && data.user && data.user.id) {
+      const userData: User = {
+        id: data.user.id,
+        email: data.user.email,
+        username: data.user.firstName || data.user.email.split('@')[0],
+        role: data.user.role || 'client',
+        garageId: data.user.garageId,
+      };
+      setUser(userData);
+      await AsyncStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(userData));
+      if (token) {
+        await setAuthToken(token);
+      }
       return { success: true };
     }
     return { success: false, error: data?.message || 'Erreur d\'authentification' };
@@ -134,7 +158,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loginWithEmail = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {
       const baseUrl = getApiUrl();
-      const response = await fetch(`${baseUrl}api/auth/login`, {
+      const response = await fetch(`${baseUrl}api/login`, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -142,7 +166,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       const data = await response.json();
-      return handleAuthResponse(data);
+      
+      if (data.message) {
+        return { success: false, error: data.message };
+      }
+      
+      // The PWA uses session cookies, store the session ID for API calls
+      // On web, cookies work automatically. On mobile, we need to store the session identifier
+      const sessionCookie = response.headers.get('set-cookie');
+      let sessionId = '';
+      if (sessionCookie) {
+        const match = sessionCookie.match(/connect\.sid=([^;]+)/);
+        if (match) {
+          sessionId = match[1];
+        }
+      }
+      
+      // Store a unique identifier for the session (user ID + timestamp)
+      const token = sessionId || `${data.user.id}_${Date.now()}`;
+      
+      return handleAuthResponse(data, token);
     } catch (error) {
       console.error('Login error:', error);
       return { success: false, error: 'Erreur de connexion' };
@@ -226,12 +269,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     try {
       const baseUrl = getApiUrl();
-      await fetch(`${baseUrl}api/auth/logout`, {
+      const token = await getAuthToken();
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      await fetch(`${baseUrl}api/logout`, {
         method: 'POST',
+        headers,
         credentials: 'include',
       });
       setUser(null);
       await AsyncStorage.removeItem(AUTH_STORAGE_KEY);
+      await setAuthToken(null);
     } catch (error) {
       console.error('Logout error:', error);
     }
