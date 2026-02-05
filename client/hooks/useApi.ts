@@ -352,3 +352,60 @@ export function useUpdateService() {
     },
   });
 }
+
+// Media Upload hooks
+export function useRequestUploadUrl() {
+  return useMutation({
+    mutationFn: async (data: { name: string; size: number; contentType: string }) => {
+      const response = await apiRequest('POST', '/api/uploads/request-url', data);
+      return response.json();
+    },
+  });
+}
+
+export function useLinkQuoteMedia() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ quoteId, fileName, filePath, fileType }: { 
+      quoteId: string; 
+      fileName: string; 
+      filePath: string; 
+      fileType: string; 
+    }) => {
+      const response = await apiRequest('POST', `/api/admin/quotes/${quoteId}/media`, {
+        fileName,
+        filePath,
+        fileType,
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/quotes'] });
+    },
+  });
+}
+
+export function useDeleteQuoteMedia() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ quoteId, mediaId }: { quoteId: string; mediaId: string }) => {
+      await apiRequest('DELETE', `/api/admin/quotes/${quoteId}/media/${mediaId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/quotes'] });
+    },
+  });
+}
+
+export function useQuoteMedia(quoteId: string) {
+  return useQuery<any[]>({
+    queryKey: ['/api/quotes', quoteId, 'media'],
+    queryFn: async () => {
+      const baseUrl = getApiUrl();
+      const response = await fetch(`${baseUrl}api/quotes/${quoteId}/media`, { credentials: 'include' });
+      if (!response.ok) return [];
+      return response.json();
+    },
+    enabled: !!quoteId,
+  });
+}

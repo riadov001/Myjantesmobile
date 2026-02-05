@@ -107,4 +107,10 @@ export function setupPwaProxy(app: Express) {
   app.get('/api/conversations/:id', (req, res) => proxyRequest(req, res, 'GET', `/api/conversations/${req.params.id}`));
   app.get('/api/conversations/:id/messages', (req, res) => proxyRequest(req, res, 'GET', `/api/conversations/${req.params.id}/messages`));
   app.post('/api/conversations/:id/messages', (req, res) => proxyRequest(req, res, 'POST', `/api/conversations/${req.params.id}/messages`));
+  
+  // Media/Upload endpoints
+  app.post('/api/uploads/request-url', (req, res) => proxyRequest(req, res, 'POST', '/api/uploads/request-url'));
+  app.post('/api/admin/quotes/:id/media', (req, res) => proxyRequest(req, res, 'POST', `/api/admin/quotes/${req.params.id}/media`));
+  app.delete('/api/admin/quotes/:id/media/:mediaId', (req, res) => proxyRequest(req, res, 'DELETE', `/api/admin/quotes/${req.params.id}/media/${req.params.mediaId}`));
+  app.get('/api/quotes/:id/media', (req, res) => proxyRequest(req, res, 'GET', `/api/quotes/${req.params.id}/media`));
 }
