@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, ScrollView, StyleSheet, Pressable } from 'react-native';
 import { useHeaderHeight } from '@react-navigation/elements';
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Feather } from '@expo/vector-icons';
 
@@ -25,7 +25,10 @@ export default function AdminMoreScreen() {
   const { user, logout } = useAuth();
   const navigation = useNavigation<any>();
   const headerHeight = useHeaderHeight();
-  const tabBarHeight = useBottomTabBarHeight();
+  const insets = useSafeAreaInsets();
+  
+  const userRole = user?.role as string;
+  const canAccessChat = userRole === 'admin' || userRole === 'superadmin' || userRole === 'employee';
 
   const handleMenuPress = (screen: string) => {
     navigation.navigate(screen);
@@ -40,7 +43,7 @@ export default function AdminMoreScreen() {
       <ScrollView
         contentContainerStyle={[
           styles.scrollContent,
-          { paddingTop: headerHeight + Spacing.lg, paddingBottom: tabBarHeight + Spacing.xl }
+          { paddingTop: headerHeight + Spacing.lg, paddingBottom: insets.bottom + Spacing.xl + 60 }
         ]}
       >
         <Card style={styles.profileCard}>
@@ -62,12 +65,12 @@ export default function AdminMoreScreen() {
 
         <ThemedText style={styles.sectionTitle}>Gestion</ThemedText>
         <Card style={styles.menuCard}>
-          {MENU_ITEMS.map((item, index) => (
+          {MENU_ITEMS.filter(item => item.id !== 'chat' || canAccessChat).map((item, index, arr) => (
             <Pressable
               key={item.id}
               style={[
                 styles.menuItem,
-                index < MENU_ITEMS.length - 1 && { borderBottomWidth: 1, borderBottomColor: theme.border }
+                index < arr.length - 1 && { borderBottomWidth: 1, borderBottomColor: theme.border }
               ]}
               onPress={() => handleMenuPress(item.screen)}
             >

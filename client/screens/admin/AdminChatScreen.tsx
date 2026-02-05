@@ -49,11 +49,21 @@ export default function AdminChatScreen() {
       const baseUrl = getApiUrl();
       const response = await fetch(`${baseUrl}api/conversations`, { credentials: 'include' });
       if (response.ok) {
-        const data = await response.json();
-        setConversations(data);
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const data = await response.json();
+          setConversations(Array.isArray(data) ? data : []);
+        } else {
+          console.error('Conversations API returned non-JSON response');
+          setConversations([]);
+        }
+      } else {
+        console.error('Conversations API error:', response.status);
+        setConversations([]);
       }
     } catch (error) {
       console.error('Error fetching conversations:', error);
+      setConversations([]);
     } finally {
       setLoading(false);
     }
@@ -64,11 +74,17 @@ export default function AdminChatScreen() {
       const baseUrl = getApiUrl();
       const response = await fetch(`${baseUrl}api/conversations/${conversationId}/messages`, { credentials: 'include' });
       if (response.ok) {
-        const data = await response.json();
-        setMessages(data);
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const data = await response.json();
+          setMessages(Array.isArray(data) ? data : []);
+        } else {
+          setMessages([]);
+        }
       }
     } catch (error) {
       console.error('Error fetching messages:', error);
+      setMessages([]);
     }
   };
 
