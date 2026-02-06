@@ -153,6 +153,10 @@ export function useCreateQuote() {
   return useMutation({
     mutationFn: async (data: Partial<Quote>) => {
       const response = await apiRequest('POST', '/api/admin/quotes', data);
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Erreur lors de la création du devis');
+      }
       return response.json();
     },
     onSuccess: () => {
@@ -211,6 +215,10 @@ export function useCreateInvoice() {
   return useMutation({
     mutationFn: async (data: Partial<Invoice>) => {
       const response = await apiRequest('POST', '/api/admin/invoices', data);
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Erreur lors de la création de la facture');
+      }
       return response.json();
     },
     onSuccess: () => {

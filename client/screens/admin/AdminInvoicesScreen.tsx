@@ -126,6 +126,7 @@ export default function AdminInvoicesScreen() {
       const baseUrl = getApiUrl();
       const pdfUrl = `${baseUrl}api/invoices/${invoice.id}/pdf`;
       
+      // On mobile, use WebBrowser to open the URL directly which triggers the browser's PDF handling
       if (Platform.OS === 'web') {
         window.open(pdfUrl, '_blank');
       } else {
