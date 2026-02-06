@@ -128,7 +128,7 @@ export default function LoginScreen() {
                 <ThemedText type="small" style={[styles.inputLabel, { color: theme.textSecondary }]}>
                   Nom
                 </ThemedText>
-                <View style={[styles.inputWrapper, { backgroundColor: theme.backgroundElevated, borderColor: theme.border }]}>
+                <View style={[styles.inputWrapper, { backgroundColor: theme.backgroundSecondary, borderColor: theme.border }]}>
                   <Feather name="user" size={20} color={theme.textSecondary} />
                   <TextInput
                     style={[styles.input, { color: theme.text }]}
@@ -147,7 +147,7 @@ export default function LoginScreen() {
               <ThemedText type="small" style={[styles.inputLabel, { color: theme.textSecondary }]}>
                 Email
               </ThemedText>
-              <View style={[styles.inputWrapper, { backgroundColor: theme.backgroundElevated, borderColor: theme.border }]}>
+              <View style={[styles.inputWrapper, { backgroundColor: theme.backgroundSecondary, borderColor: theme.border }]}>
                 <Feather name="mail" size={20} color={theme.textSecondary} />
                 <TextInput
                   style={[styles.input, { color: theme.text }]}
@@ -167,7 +167,7 @@ export default function LoginScreen() {
               <ThemedText type="small" style={[styles.inputLabel, { color: theme.textSecondary }]}>
                 Mot de passe
               </ThemedText>
-              <View style={[styles.inputWrapper, { backgroundColor: theme.backgroundElevated, borderColor: theme.border }]}>
+              <View style={[styles.inputWrapper, { backgroundColor: theme.backgroundSecondary, borderColor: theme.border }]}>
                 <Feather name="lock" size={20} color={theme.textSecondary} />
                 <TextInput
                   style={[styles.input, { color: theme.text }]}
