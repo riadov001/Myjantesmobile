@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, StyleSheet, Pressable, Switch, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, StyleSheet, Pressable, Switch, Alert, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
@@ -15,6 +15,7 @@ import { KeyboardAwareScrollViewCompat } from '@/components/KeyboardAwareScrollV
 import { useTheme } from '@/hooks/useTheme';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNotifications, useMarkAllNotificationsRead } from '@/hooks/useApi';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { Spacing, BorderRadius } from '@/constants/theme';
 
 export default function ProfileScreen() {
@@ -26,6 +27,7 @@ export default function ProfileScreen() {
   const { user, logout } = useAuth();
   const { data: notifications, refetch: refetchNotifications } = useNotifications();
   const markAllRead = useMarkAllNotificationsRead();
+  const { isEnabled: pushEnabled, toggleNotifications, permissionStatus } = usePushNotifications();
 
   const unreadCount = notifications?.filter(n => !n.isRead).length || 0;
 
@@ -78,7 +80,7 @@ export default function ProfileScreen() {
           paddingHorizontal: Spacing.lg,
         }}
       >
-        <Card style={[styles.profileCard, { backgroundColor: theme.backgroundDefault }]}>
+        <Card style={StyleSheet.flatten([styles.profileCard, { backgroundColor: theme.backgroundDefault }])}>
           <View style={[styles.avatar, { backgroundColor: `${theme.primary}15` }]}>
             <ThemedText type="h1" style={{ color: theme.primary }}>
               {user?.username?.charAt(0).toUpperCase() || 'U'}
@@ -101,7 +103,7 @@ export default function ProfileScreen() {
           <ThemedText type="h4" style={styles.sectionTitle}>
             Notifications
           </ThemedText>
-          <Card style={[styles.menuCard, { backgroundColor: theme.backgroundDefault }]}>
+          <Card style={StyleSheet.flatten([styles.menuCard, { backgroundColor: theme.backgroundDefault }])}>
             <Pressable style={styles.menuItem} onPress={handleMarkAllRead}>
               <View style={styles.menuItemLeft}>
                 <View style={[styles.menuIcon, { backgroundColor: `${theme.primary}15` }]}>
@@ -129,7 +131,27 @@ export default function ProfileScreen() {
           <ThemedText type="h4" style={styles.sectionTitle}>
             Paramètres
           </ThemedText>
-          <Card style={[styles.menuCard, { backgroundColor: theme.backgroundDefault }]}>
+          <Card style={StyleSheet.flatten([styles.menuCard, { backgroundColor: theme.backgroundDefault }])}>
+            <View style={styles.menuItem}>
+              <View style={styles.menuItemLeft}>
+                <View style={[styles.menuIcon, { backgroundColor: `${theme.primary}15` }]}>
+                  <Feather name="bell" size={20} color={theme.primary} />
+                </View>
+                <View>
+                  <ThemedText type="body">Notifications push</ThemedText>
+                  <ThemedText type="small" style={{ color: theme.textSecondary }}>
+                    Rappels de RDV et mises à jour
+                  </ThemedText>
+                </View>
+              </View>
+              <Switch
+                value={pushEnabled}
+                onValueChange={toggleNotifications}
+                trackColor={{ false: theme.border, true: `${theme.primary}80` }}
+                thumbColor={pushEnabled ? theme.primary : '#f4f3f4'}
+              />
+            </View>
+            <View style={[styles.divider, { backgroundColor: theme.border }]} />
             <View style={styles.menuItem}>
               <View style={styles.menuItemLeft}>
                 <View style={[styles.menuIcon, { backgroundColor: `${theme.textSecondary}15` }]}>
@@ -160,7 +182,7 @@ export default function ProfileScreen() {
           <ThemedText type="h4" style={styles.sectionTitle}>
             À propos
           </ThemedText>
-          <Card style={[styles.menuCard, { backgroundColor: theme.backgroundDefault }]}>
+          <Card style={StyleSheet.flatten([styles.menuCard, { backgroundColor: theme.backgroundDefault }])}>
             <View style={styles.menuItem}>
               <View style={styles.menuItemLeft}>
                 <View style={[styles.menuIcon, { backgroundColor: `${theme.textSecondary}15` }]}>

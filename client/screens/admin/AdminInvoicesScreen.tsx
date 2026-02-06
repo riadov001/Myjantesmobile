@@ -97,7 +97,7 @@ export default function AdminInvoicesScreen() {
     setSelectedInvoice(invoice);
     const clientName = getUserName(invoice.clientId);
     setEmailSubject(`Votre facture ${invoice.invoiceNumber || invoice.id} - MyJantes`);
-    setEmailBody(`Bonjour ${clientName},\n\nVeuillez trouver ci-joint votre facture ${invoice.invoiceNumber || invoice.id} d'un montant de ${formatCurrency(invoice.totalAmount)}.\n\nNous vous remercions pour votre confiance.\n\nCordialement,\nL'équipe MyJantes`);
+    setEmailBody(`Bonjour ${clientName},\n\nVeuillez trouver ci-joint votre facture ${invoice.invoiceNumber || invoice.id} d'un montant de ${formatCurrency(invoice.totalTTC || invoice.amount)}.\n\nNous vous remercions pour votre confiance.\n\nCordialement,\nL'équipe MyJantes`);
     setEmailModal(true);
   };
 
@@ -775,5 +775,12 @@ const styles = StyleSheet.create({
   buttonContent: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  input: {
+    borderWidth: 1,
+    borderRadius: BorderRadius.md,
+    padding: Spacing.md,
+    fontSize: 16,
+    marginBottom: Spacing.md,
   },
 });

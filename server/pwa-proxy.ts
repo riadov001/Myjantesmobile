@@ -10,7 +10,6 @@ async function proxyRequest(req: Request, res: Response, method: string, path: s
       'Content-Type': 'application/json',
     };
     
-    // Forward cookies from client
     if (req.headers.cookie) {
       headers['Cookie'] = req.headers.cookie;
     }
@@ -27,16 +26,28 @@ async function proxyRequest(req: Request, res: Response, method: string, path: s
     
     const response = await fetch(url, fetchOptions);
     
-    // Forward Set-Cookie headers from PWA backend
-    const setCookie = response.headers.get('set-cookie');
-    if (setCookie) {
-      res.setHeader('Set-Cookie', setCookie);
+    const setCookieHeaders = response.headers.getSetCookie?.() || [];
+    if (setCookieHeaders.length > 0) {
+      res.setHeader('Set-Cookie', setCookieHeaders);
+    } else {
+      const setCookie = response.headers.get('set-cookie');
+      if (setCookie) {
+        res.setHeader('Set-Cookie', setCookie);
+      }
     }
     
     const contentType = response.headers.get('content-type');
     if (contentType && contentType.includes('application/json')) {
       const data = await response.json();
       res.status(response.status).json(data);
+    } else if (contentType && (contentType.includes('application/pdf') || contentType.includes('application/octet-stream'))) {
+      res.setHeader('Content-Type', contentType);
+      const contentDisposition = response.headers.get('content-disposition');
+      if (contentDisposition) {
+        res.setHeader('Content-Disposition', contentDisposition);
+      }
+      const buffer = await response.arrayBuffer();
+      res.status(response.status).send(Buffer.from(buffer));
     } else {
       const text = await response.text();
       res.status(response.status).send(text);
@@ -53,8 +64,11 @@ export function setupPwaProxy(app: Express) {
   app.post('/api/logout', (req, res) => proxyRequest(req, res, 'POST', '/api/logout'));
   app.get('/api/auth/user', (req, res) => proxyRequest(req, res, 'GET', '/api/auth/user'));
   app.post('/api/register', (req, res) => proxyRequest(req, res, 'POST', '/api/register'));
+  app.post('/api/auth/register', (req, res) => proxyRequest(req, res, 'POST', '/api/auth/register'));
+  app.post('/api/auth/oauth/google', (req, res) => proxyRequest(req, res, 'POST', '/api/auth/oauth/google'));
+  app.post('/api/auth/oauth/apple', (req, res) => proxyRequest(req, res, 'POST', '/api/auth/oauth/apple'));
   
-  // Data endpoints
+  // Client data endpoints
   app.get('/api/quotes', (req, res) => proxyRequest(req, res, 'GET', '/api/quotes'));
   app.get('/api/quotes/:id', (req, res) => proxyRequest(req, res, 'GET', `/api/quotes/${req.params.id}`));
   app.post('/api/quotes', (req, res) => proxyRequest(req, res, 'POST', '/api/quotes'));
@@ -69,11 +83,12 @@ export function setupPwaProxy(app: Express) {
   
   app.get('/api/notifications', (req, res) => proxyRequest(req, res, 'GET', '/api/notifications'));
   app.patch('/api/notifications/:id/read', (req, res) => proxyRequest(req, res, 'PATCH', `/api/notifications/${req.params.id}/read`));
+  app.patch('/api/notifications/read-all', (req, res) => proxyRequest(req, res, 'PATCH', '/api/notifications/read-all'));
   
   app.get('/api/prestations', (req, res) => proxyRequest(req, res, 'GET', '/api/prestations'));
-  app.get('/api/admin/reservations', (req, res) => proxyRequest(req, res, 'GET', '/api/admin/reservations'));
+  app.get('/api/services', (req, res) => proxyRequest(req, res, 'GET', '/api/services'));
   
-  // Specific PDF endpoints
+  // PDF endpoints
   app.get('/api/quotes/:id/pdf', (req, res) => proxyRequest(req, res, 'GET', `/api/quotes/${req.params.id}/pdf`));
   app.get('/api/invoices/:id/pdf', (req, res) => proxyRequest(req, res, 'GET', `/api/invoices/${req.params.id}/pdf`));
 
@@ -82,6 +97,7 @@ export function setupPwaProxy(app: Express) {
     const queryString = req.url.includes('?') ? req.url.split('?')[1] : '';
     proxyRequest(req, res, 'GET', `/api/admin/analytics${queryString ? '?' + queryString : ''}`);
   });
+  
   app.get('/api/admin/quotes', (req, res) => proxyRequest(req, res, 'GET', '/api/admin/quotes'));
   app.post('/api/admin/quotes', (req, res) => proxyRequest(req, res, 'POST', '/api/admin/quotes'));
   app.patch('/api/admin/quotes/:id', (req, res) => proxyRequest(req, res, 'PATCH', `/api/admin/quotes/${req.params.id}`));
@@ -91,6 +107,7 @@ export function setupPwaProxy(app: Express) {
   app.get('/api/admin/invoices', (req, res) => proxyRequest(req, res, 'GET', '/api/admin/invoices'));
   app.post('/api/admin/invoices', (req, res) => proxyRequest(req, res, 'POST', '/api/admin/invoices'));
   app.patch('/api/admin/invoices/:id', (req, res) => proxyRequest(req, res, 'PATCH', `/api/admin/invoices/${req.params.id}`));
+  app.delete('/api/admin/invoices/:id', (req, res) => proxyRequest(req, res, 'DELETE', `/api/admin/invoices/${req.params.id}`));
   app.post('/api/admin/invoices/:id/send-email', (req, res) => proxyRequest(req, res, 'POST', `/api/admin/invoices/${req.params.id}/send-email`));
   
   app.get('/api/admin/reservations', (req, res) => proxyRequest(req, res, 'GET', '/api/admin/reservations'));
@@ -103,8 +120,15 @@ export function setupPwaProxy(app: Express) {
   app.post('/api/admin/garages', (req, res) => proxyRequest(req, res, 'POST', '/api/admin/garages'));
   app.patch('/api/admin/garages/:id', (req, res) => proxyRequest(req, res, 'PATCH', `/api/admin/garages/${req.params.id}`));
   
+  // Services / Prestations admin
   app.post('/api/admin/services', (req, res) => proxyRequest(req, res, 'POST', '/api/admin/services'));
   app.patch('/api/admin/services/:id', (req, res) => proxyRequest(req, res, 'PATCH', `/api/admin/services/${req.params.id}`));
+  app.post('/api/admin/prestations', (req, res) => proxyRequest(req, res, 'POST', '/api/admin/prestations'));
+  app.patch('/api/admin/prestations/:id', (req, res) => proxyRequest(req, res, 'PATCH', `/api/admin/prestations/${req.params.id}`));
+  
+  // Settings
+  app.get('/api/admin/settings', (req, res) => proxyRequest(req, res, 'GET', '/api/admin/settings'));
+  app.put('/api/admin/settings', (req, res) => proxyRequest(req, res, 'PUT', '/api/admin/settings'));
   
   // Chat/Conversations endpoints
   app.get('/api/conversations', (req, res) => proxyRequest(req, res, 'GET', '/api/conversations'));
@@ -113,13 +137,17 @@ export function setupPwaProxy(app: Express) {
   app.get('/api/conversations/:id/messages', (req, res) => proxyRequest(req, res, 'GET', `/api/conversations/${req.params.id}/messages`));
   app.post('/api/conversations/:id/messages', (req, res) => proxyRequest(req, res, 'POST', `/api/conversations/${req.params.id}/messages`));
   
-  // Media/Upload endpoints
+  // Media/Upload endpoints - Quotes
   app.post('/api/uploads/request-url', (req, res) => proxyRequest(req, res, 'POST', '/api/uploads/request-url'));
   app.post('/api/admin/quotes/:id/media', (req, res) => proxyRequest(req, res, 'POST', `/api/admin/quotes/${req.params.id}/media`));
   app.delete('/api/admin/quotes/:id/media/:mediaId', (req, res) => proxyRequest(req, res, 'DELETE', `/api/admin/quotes/${req.params.id}/media/${req.params.mediaId}`));
   app.get('/api/quotes/:id/media', (req, res) => proxyRequest(req, res, 'GET', `/api/quotes/${req.params.id}/media`));
   
+  // Media/Upload endpoints - Invoices
   app.post('/api/admin/invoices/:id/media', (req, res) => proxyRequest(req, res, 'POST', `/api/admin/invoices/${req.params.id}/media`));
   app.delete('/api/admin/invoices/:id/media/:mediaId', (req, res) => proxyRequest(req, res, 'DELETE', `/api/admin/invoices/${req.params.id}/media/${req.params.mediaId}`));
   app.get('/api/invoices/:id/media', (req, res) => proxyRequest(req, res, 'GET', `/api/invoices/${req.params.id}/media`));
+  
+  // Push notification token registration
+  app.post('/api/push-token', (req, res) => proxyRequest(req, res, 'POST', '/api/push-token'));
 }
