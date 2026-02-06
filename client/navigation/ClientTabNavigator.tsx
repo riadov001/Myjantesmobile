@@ -45,6 +45,8 @@ export default function ClientTabNavigator() {
           }),
           borderTopWidth: 0,
           elevation: 0,
+          height: Platform.OS === 'ios' ? 88 : 70,
+          paddingBottom: Platform.OS === 'ios' ? 30 : 20,
         },
         tabBarBackground: () =>
           Platform.OS === 'ios' ? (
